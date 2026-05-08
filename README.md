@@ -1,145 +1,209 @@
-## 🧠 Liver Fibrosis
+# 🩺 Liver Fibrosis Detection & Classification System
 
-Liver fibrosis is a medical condition characterized by the excessive accumulation of extracellular matrix proteins, including collagen, that occurs in most types of chronic liver diseases. It results from sustained wound-healing responses to chronic liver injury caused by factors such as:
+A deep learning-based system that automatically **classifies liver fibrosis stages** from medical imaging data (Ultrasound & CT scans), built as a Streamlit web application.
 
-![F0](https://github.com/user-attachments/assets/f3419c5c-f206-4d10-bca4-c2f8fd1b710e)
+---
 
+## 👥 Team Members
+
+| Name |
+|------|
+| Fatma El-Zahraa Mahmoud Hamed |
+| Gehad El-Sayed Mahmoud |
+| Farah Hussein Mohammed |
+| Nada Azab Mohamed |
+| Mariem Sayed Ahmed |
+| Fatma El-Zahraa Gamal Hussein |
+
+---
+
+## 📌 Project Overview
+
+Liver fibrosis is the buildup of scar tissue in the liver caused by repeated damage from:
 - Viral hepatitis (Hepatitis B, C)
 - Alcohol abuse
 - Non-alcoholic fatty liver disease (NAFLD)
 - Autoimmune liver diseases
 
-If left undetected or untreated, liver fibrosis can progress to cirrhosis, liver failure, and even liver cancer.
+If left undetected, fibrosis can progress to **cirrhosis**, **liver failure**, or **liver cancer**.
+
+Traditional diagnosis relies on invasive **liver biopsies** — painful, costly, and prone to sampling errors. This system provides a **non-invasive, automated alternative** using deep learning on ultrasound and CT images.
 
 ---
 
-## ❗ The Challenge
+## 🎯 Objective
 
-Traditional diagnosis of liver fibrosis involves invasive procedures such as **liver biopsies**, which are:
-
-- Painful  
-- Costly  
-- Risky due to potential complications  
-- Subject to sampling errors  
-
-There is a growing demand for **non-invasive, accurate, and efficient** techniques to detect and stage liver fibrosis. Medical imaging, particularly **CT scans** and **ultrasound**, has become an essential tool in this domain. However, interpretation of medical images requires expertise and time.
+Build a system to help liver patients by **detecting and classifying liver cirrhosis** using deep learning models on Ultrasound and CT images.
 
 ---
 
-## 💡 Our Solution
+## 🏗️ System Architecture
 
-In this project, we propose a **deep learning-based system** to **automatically classify liver fibrosis stages** from medical imaging data. Using convolutional neural networks (CNNs), specifically a **MobileNet-based architecture**, we aim to:
+```
+Input Image → Preprocessing → Deep Learning Model → Classification / Segmentation Output
+     ↑                                                          ↓
+  Dataset                                              Streamlit UI / FastAPI
+```
 
-- Analyze liver CT scan images  
-- Detect features associated with fibrosis  
-- Classify the condition into stages (e.g., normal, mild, moderate, severe)
-
----
-We now extend the system to support several additional powerful models for better performance:
-
-- **ResNet-50**: A residual network for improved learning on deeper networks.
-- **VGG-19**: A classic model known for its simplicity and high performance.
-- **NasNetMobile**: A mobile-friendly model for resource-efficient prediction.
-- **DenseNet-121**: Uses dense connections between layers to enhance feature reuse.
-- **InceptionResNetV2**: Combines the strengths of Inception and ResNet architectures.
-- **Unet++**: A more complex U-Net for image segmentation tasks, especially in medical imaging.
----
-## 🖼️ Application Interface
-
-Our Streamlit application provides a **user-friendly interface** to classify liver fibrosis stages based on ultrasound images.
-
-### 🔍 How It Works
-
-1. The user uploads a **liver ultrasound image** (JPG, JPEG, or PNG).
-2. The application displays the image for confirmation.
-3. A **trained deep learning model** processes the image.
-4. The model outputs the **predicted fibrosis stage** (e.g., F0, F1, F2, ..., F4).
-
-### ✅ Example
-
-Below is an example of the interface after uploading an image:
-
-![Streamlit App Interface](path/to/screenshot.png)
-
-- **Uploaded File:** `F0.jpg`
-- **Predicted Fibrosis Stage:** 🟢 `F0` (No fibrosis)
-
-This enables doctors and researchers to quickly and efficiently determine the fibrosis stage without requiring invasive procedures.
+**Layers:**
+- **User Interface** — Streamlit web app / Flutter mobile app
+- **Application Layer** — FastAPI REST API deployed on Hugging Face
+- **Data Access Layer** — Trained model (.h5) + preprocessing pipeline
 
 ---
 
-## 🧠 Deployment Streamlit Code - Liver Fibrosis Classifier
+## 🧠 Models
 
-The backend of the liver fibrosis classification application is powered by TensorFlow, Streamlit, and a pre-trained deep learning model. Here is an overview of how the backend works:
+### Classification Models (Ultrasound Images)
 
-### Key Components:
+| Model | Best Val Accuracy | Best Parameters |
+|-------|:-----------------:|-----------------|
+| **DenseNet-121** ⭐ | **98.50%** | batch=8, epochs=30, optimizer=adam, lr=0.00005 |
+| VGG-19 | 98.11% | batch=16, epochs=30, optimizer=adam, lr=0.0001 |
+| InceptionResNetV2 | 97.95% | batch=8, epochs=10, optimizer=adam, lr=0.0001 |
+| ResNet-50 | 97.63% | batch=16, epochs=10, optimizer=adam |
+| NasNetMobile | 95.74% | batch=16, epochs=30, optimizer=adam |
 
-1. **CUDA Configuration**:
-    - TensorFlow is configured to run on the CPU by setting the `CUDA_VISIBLE_DEVICES` environment variable to `-1`, ensuring compatibility in environments without GPU support.
-    ```python
-    import os
-    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Force TensorFlow to run on CPU
-    ```
+### Segmentation Model (CT Images)
 
-2. **Streamlit Setup**:
-    - Streamlit is used to create an interactive web interface for the user, centered around the liver fibrosis classification task.
-    ```python
-    import streamlit as st
-    st.set_page_config(page_title="Liver Fibrosis Classifier", layout="centered")
-    ```
-
-3. **Model Loading**:
-    - The `load_model()` function is used to load the pre-trained Keras model that classifies liver fibrosis stages. The model is cached for performance optimization.
-    ```python
-    @st.cache_resource
-    def load_model():
-        return tf.keras.models.load_model("/content/Dense_model.path/kaggle/working/Dense_model_.h5")
-    model = load_model()
-    ```
-
-4. **Image Preprocessing**:
-    - The `preprocess_image()` function resizes the uploaded image to 224x224 pixels, normalizing the pixel values to [0, 1] before passing it to the model for prediction.
-    ```python
-    def preprocess_image(image: Image.Image) -> np.ndarray:
-        image = image.resize(IMG_SIZE)
-        image_array = img_to_array(image) / 255.0  # Normalize to [0,1]
-        return np.expand_dims(image_array, axis=0)
-    ```
-
-5. **Prediction Function**:
-    - The `predict_fibrosis()` function predicts the fibrosis stage by using the model's output and provides a corresponding fibrosis status (whether fibrosis is present) based on the prediction.
-    ```python
-    def predict_fibrosis(model, img_tensor, class_labels):
-        prediction = model.predict(img_tensor)
-        predicted_class = np.argmax(prediction)
-        predicted_label = class_labels[predicted_class]
-        fibrosis_status = "🟢 No Fibrosis" if predicted_label == "F0" else "🔴 Yes Fibrosis"
-        return fibrosis_status, predicted_label, prediction
-    ```
-
-6. **Streamlit UI Integration**:
-    - The Streamlit app interface allows users to upload an image, displays the image, and shows the model's prediction along with the confidence level.
-    ```python
-    uploaded_file = st.file_uploader("📤 Upload an image...", type=["jpg", "jpeg", "png"])
-    if uploaded_file:
-        image = Image.open(uploaded_file).convert("RGB")
-        st.image(image, caption='🖼️ Uploaded Image', use_column_width=True)
-
-        # Preprocess and Predict
-        img_tensor = preprocess_image(image)
-        fibrosis_status, predicted_stage, preds = predict_fibrosis(model, img_tensor, CLASS_ORDER)
-        confidence = float(np.max(preds))
-        st.markdown(f"### 🩺 Predicted Fibrosis Stage: **{predicted_stage}**")
-        st.markdown(f"### 🔍 Fibrosis Status: **{fibrosis_status}**")
-        st.markdown(f"**🔢 Confidence:** `{confidence * 100:.2f}%`")
-    ```
+| Model | Val Accuracy | Parameters |
+|-------|:-----------:|------------|
+| UNet++ (EfficientNet-B5) | 97.90% | batch=32, epochs=10, optimizer=RMSprop |
+| UNet++ (ResNeXt50) | 97.60% | batch=32, epochs=10, optimizer=RMSprop |
 
 ---
 
-## 🧪 Technologies Used
+## 📂 Datasets
 
-- Python  
-- TensorFlow / Keras  
-- OpenCV / PIL  
-- Streamlit (for interactive web-based deployment)  
-- scikit-learn (for preprocessing and evaluation)
+### Ultrasound Dataset
+
+| Stage | Description | Initial Samples | Train | Validation |
+|-------|-------------|:--------------:|:-----:|:----------:|
+| F0 | No fibrosis | 2114 | 3382 | 423 |
+| F1 | Mild fibrosis | 861 | 1376 | 173 |
+| F2 | Moderate fibrosis | 793 | 1268 | 159 |
+| F3 | Severe fibrosis | 857 | 1370 | 172 |
+| F4 | Cirrhosis | 1698 | 2716 | 340 |
+
+### CT Dataset
+
+| Split | Samples |
+|-------|:-------:|
+| Total | 58,638 |
+| Training (80%) | 46,910 |
+| Validation (10%) | 5,863 |
+| Testing (10%) | 5,865 |
+
+Data type: 2D slices extracted from 3D CT scans, includes masks for liver, tumor, bone, arteries, and kidneys.
+
+---
+
+## ⚙️ Preprocessing
+
+### Ultrasound Images
+1. **RGB Conversion** — ensure consistent 3-channel format
+2. **Resizing** — 224×224 pixels
+3. **Normalization** — pixel values scaled from [0, 255] → [0, 1]
+4. **Data Augmentation** — horizontal flipping to increase diversity and prevent overfitting
+5. **Class Balancing** — underrepresented classes augmented more
+6. **Train/Validation Split** — 80% / 20% (validation not augmented)
+
+### CT Images
+1. **Resizing** — 224×224 pixels
+2. **Normalization** — pixel values scaled to [0, 1]
+3. **Mask Conversion** — binary format
+4. **Train/Val/Test Split** — 80% / 10% / 10%
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+```bash
+pip install streamlit tensorflow pillow numpy
+```
+
+### Project Structure
+
+```
+liver-fibrosis-classifier/
+├── liver_fibrosis_app.py       # Main Streamlit application
+├── README.md
+└── models/
+    ├── DenseNet121_model.h5
+    ├── VGG19_model.h5
+    ├── InceptionResNetV2_model.h5
+    ├── ResNet50_model.h5
+    ├── NasNetMobile_model.h5
+    └── UNetPP_EfficientB5_model.h5
+```
+
+### Run the App
+
+```bash
+streamlit run liver_fibrosis_app.py
+```
+
+---
+
+## 🖥️ How It Works
+
+1. Select a model from the sidebar
+2. Upload a liver **ultrasound image** (JPG, JPEG, PNG) — or a CT slice for UNet++
+3. The model preprocesses and analyzes the image
+4. Results displayed:
+   - **Classification** → predicted fibrosis stage (F0–F4) + confidence + per-class probabilities
+   - **Segmentation** → predicted liver mask overlay
+
+---
+
+## 🔬 Fibrosis Stages
+
+| Stage | Label | Description |
+|-------|-------|-------------|
+| F0 | 🟢 No Fibrosis | No scarring. Liver appears healthy. |
+| F1 | 🟡 Mild Fibrosis | Scarring confined to portal areas. |
+| F2 | 🟠 Moderate Fibrosis | Scarring spread around portal areas. |
+| F3 | 🔴 Severe Fibrosis | Bridging fibrosis across liver sections. |
+| F4 | 🔴 Cirrhosis | Advanced scarring. Liver function impaired. |
+
+---
+
+## 🛠️ Technologies Used
+
+| Category | Tools |
+|----------|-------|
+| Deep Learning | TensorFlow / Keras, PyTorch |
+| Image Processing | OpenCV, PIL, torchvision |
+| Segmentation | segmentation_models_pytorch |
+| Web App | Streamlit |
+| Mobile App | Flutter |
+| Backend API | FastAPI |
+| Deployment | Hugging Face, Oracle APEX |
+| Evaluation | scikit-learn |
+
+---
+
+## 📈 Performance Criteria
+
+- **Accuracy** — ratio of correctly predicted instances to total predictions (classification)
+- **Dice Similarity Coefficient (Dice Score)** — measures overlap between predicted and actual liver region (segmentation)
+
+---
+
+## 🔭 What's Next
+
+- Collect real-world data from **Egyptian hospitals** to train models on local datasets reflecting patient diversity and imaging conditions
+- Develop a **fully featured mobile application** (Flutter) with all web platform functionalities for clinicians and patients
+
+---
+
+## 📚 References
+
+1. H.-C. Park et al., "Automated classification of liver fibrosis stages using ultrasound imaging," *BMC Medical Imaging*, vol. 24, no. 36, 2024.
+2. Y. Joo et al., "Classification of Liver Fibrosis from Heterogeneous Ultrasound Image," *IEEE Access*, vol. 11, pp. 9920–9930, Jan. 2023.
+3. M. Al-Hasani et al., "Ultrasound Radiomics for the Detection of Early-Stage Liver Fibrosis," *Diagnostics*, vol. 12, no. 11, Nov. 2022.
+4. J.H. Lee et al., "Deep learning with ultrasonography: automated classification of liver fibrosis using a deep convolutional neural network," *Eur. Radiol.*, vol. 30, pp. 1264–1273, 2020.
+5. D. Meng et al., "Liver Fibrosis Classification Based on Transfer Learning and FCNet for Ultrasound Images," *IEEE Access*, Mar. 2017.
+6. G. N. Yashaswini et al., "Deep learning technique for automatic liver and liver tumor segmentation in CT images," *Journal of Liver Transplantation*, vol. 17, Feb. 2025.
